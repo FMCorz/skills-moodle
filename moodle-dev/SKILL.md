@@ -103,6 +103,11 @@ If you need to select non-unique fields, either:
 - Do **not** rewrite valid code paths just to satisfy those lint warnings.
 - Verify with syntax/runtime checks as needed, but treat those specific lint warnings as non-actionable.
 
+## Parameter validation
+
+- Almost never use `PARAM_TEXT` for validation. It has multilang filter exceptions that only rarely apply.
+- For most text input, use `PARAM_RAW` or `PARAM_RAW_TRIMMED`.
+
 ## Moodle web services context rules
 
 - In external/web service methods, do **not** call `require_login()`.
@@ -124,6 +129,7 @@ Never run the unit tests yourself, unless explicitly asked to.
 
 ### General style
 
+- **Use `@javascript` only when required**: add the tag only to scenarios that depend on browser JavaScript, such as dialogues or other JavaScript-only components. Omit it otherwise because JavaScript scenarios are slower.
 - **Write tests from the user-visible UI**: prefer visible labels, button text, field labels, dialogue titles, and page content over implementation details, generated ids, or internal field names.
 - **Use one `Given`/`When`/`Then` per scenario**: after the first one, continue with `And`.
 - **Keep scenarios in the right feature file**: put a scenario where the feature belongs conceptually. Do not mix unrelated behaviours into a convenient file just because the setup is nearby.
@@ -148,7 +154,8 @@ Never run the unit tests yourself, unless explicitly asked to.
 
 ### Style
 
-- **Prefer verbosity**: be explicit in setup and assertions; avoid overly clever abstractions in tests.
+- **Verbosity beats abstraction in tests**: setup, permissions, generated users/courses/groups, and the key action should be readable in the `test_*` method itself. Prefer a few duplicated lines over a helper that forces the reader to jump around to understand the scenario.
+- **Do not hide scenario context**: avoid broad setup helpers such as `create_environment()`, `create_fixture()`, `create_course_resolve_env()`, or helpers with boolean/config arguments that materially change the scenario. If a helper name does not make the generated data and permissions obvious, inline the setup.
 - **One scenario per `test_*`**: keep each test focused; avoid loops that effectively test multiple scenarios at once.
 - **Order of `test_*` methods (same unit under test)**: when several tests target the **same function or method**, order them so the **simplest, most central behaviour comes first**—what the API is fundamentally about (e.g. the main predicate or bound parameter). **Later tests add complexity**: extra filters, other contexts, other users, or alternate inputs. Do not lead with a structural concern (such as “another context”) if a more basic test (such as “the time bound is applied”) better expresses the method’s essence.
 - **Minimal fixtures**: create only the data needed for the scenario inside that `test_*` method.
@@ -163,6 +170,9 @@ Never run the unit tests yourself, unless explicitly asked to.
 ### Helpers in test classes
 
 - **Do not add a protected/private helper method** that is only called from **one** test; **inline** the few lines in that test instead. Extract helpers only when reused **multiple times** or when they genuinely reduce noise without hiding the scenario.
+- **Do not extract scenario setup just to reduce line count**. Test helpers are acceptable for low-level mechanics or custom assertions; they are not acceptable when they hide which users, roles, capabilities, groups, contexts, or records are relevant to the behaviour.
+- **Avoid helper arguments that act like hidden branches**, especially booleans or broad option arrays. If a test needs different generated users, groups, permissions, or contexts, create them explicitly in that test.
+- **Slight duplication within a test class is preferable** to an abstraction that obscures why the test passes or fails.
 
 ### Mocks and fixtures
 
@@ -195,6 +205,7 @@ final class example_test extends advanced_testcase {
 - Use the **core data generator** for Moodle entities (courses, users, groups, etc.). Assign it to **`$dg`** once per test and call methods on that variable.
 - **Variable names**: use short numbered names so relationships stay obvious—**`$c1`**, **`$c2`** for courses, **`$u1`**, **`$u2`** for users, and when several entities belong to the same course use a suffix such as **`$g1a`**, **`$g1b`** for two groups on course 1. Extend the same pattern to other types as needed.
 - **Minimal generator data**: pass only the arguments (and array keys) required for the behaviour under test. Prefer defaults over custom fields unless the test depends on a specific value.
+- **Use meaningful fixture values** when names, labels, identifiers, or other generated fields appear in assertions or search terms. Avoid opaque placeholder values unless the exact string is irrelevant to understanding the test.
 
 ```php
 $dg = $this->getDataGenerator();
