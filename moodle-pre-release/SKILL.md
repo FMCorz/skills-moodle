@@ -102,6 +102,24 @@ docker exec <identifier> bash -c '/opt/moodle-plugin-ci/bin/moodle-plugin-ci php
 
 Then **re-run PHPCS** until it passes. **Manually** fix anything phpcbf cannot.
 
+### Addressing PHPCS findings
+
+For PHPDoc fixes:
+
+- Read the implementation before writing the docblock. Use parent or interface documentation only to understand the contract; never copy it verbatim without checking that it describes the current implementation.
+- Use one short title ending with a full stop: `Check access.`, `Get page URL.`, `Process the form submission.`, or `Validation.`
+- Do not copy parent wording aimed at implementers, such as “stub”, “override this”, “used if”, or instructions about how an implementation should behave. Describe what the current method does.
+- Keep tags minimal. Use short descriptions only when needed, such as `@param array $data The data.`, and prefer a bare return type such as `@return array`.
+- Never add `@throws`.
+- Do not surface `@deprecated` from a parent. Add it only when the current method itself is intentionally deprecated.
+- Do not inherit prose or tags merely because they exist in the parent. Brevity is the default.
+
+For intentional PHPCS suppressions, use the bare directive without a trailing explanation:
+
+```php
+// phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses
+```
+
 ---
 
 ## Ground rules
