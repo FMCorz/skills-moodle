@@ -29,6 +29,40 @@ docker exec <container> /opt/moodle-plugin-ci/bin/moodle-plugin-ci list
 
 **Other jobs** (`install`, `phpunit`, `behat`, `grunt`, `mustache`, …) use the same binary after a full **`moodle-plugin-ci install`** layout; see [Moodle Plugin CI](https://moodlehq.github.io/moodle-plugin-ci/) and the plugin’s **`.github/workflows`** for order and flags. PHPCS alone does not need that install.
 
+### Mustache prerequisites and diagnosis
+
+The **`mustache`** command runs its bundled `vnu.jar` HTML validator through Java. When several unrelated templates report **`Problem calling HTML validator`**, check the runtime before editing templates:
+
+```bash
+docker exec <container> bash -c '
+java -version
+ls -lh /opt/moodle-plugin-ci/vendor/moodlehq/moodle-local_ci/node_modules/vnu-jar/build/dist/vnu.jar
+'
+```
+
+If Java is missing on Debian/Ubuntu, install a headless runtime and rerun the check:
+
+```bash
+docker exec <container> bash -ec '
+apt-get update -qq
+apt-get install -y -qq default-jre-headless
+java -version
+'
+```
+
+Use `mustache -vvv` to expose the validator invocation. A generic validator warning means the tool did not receive valid validator JSON; only change a template after the runtime works and the linter reports a file-specific HTML problem. By contrast, **`Example context missing`** is template-specific: add the standard `@template` documentation section with valid **`Example context (json):`** data.
+
+**`INFO: ESLint did not run`** is separate and non-fatal. With Moodle’s `public/` layout, Plugin CI may look for `public/node_modules/.bin/eslint` while dependencies are installed at the repository root. Compare both locations before blaming the template:
+
+```bash
+docker exec <container> bash -c '
+ls -l /var/www/html/node_modules/.bin/eslint
+ls -l /var/www/html/public/node_modules/.bin/eslint
+'
+```
+
+If only the root executable exists, treat this as a Plugin CI layout issue. Verify JavaScript with the root Moodle toolchain as appropriate; do not alter templates or add `.mustachelintignore` entries merely to hide this message.
+
 ### Grunt and Browserslist
 
 For **Grunt**, Plugin CI normally uses **cwd on the Moodle tree**, so **Browserslist** should resolve from **Moodle’s root `package.json`**, not from `/opt/moodle-plugin-ci`. If results look off, check **plugin-local `Gruntfile.js` / `package.json`**; use **`BROWSERSLIST`** only when intentionally overriding the query.
@@ -61,7 +95,7 @@ If you only upgraded an existing container, **`docker exec`** the commands above
 
 Install per container (or bake into the image). **`/opt/moodle-plugin-ci`** lives in the **container layer**; recreating the container drops it unless the image includes these steps.
 
-**Prerequisites:** **Node 22** (see **Node.js** above), PHP, curl; permission to run **`apt-get`** and to write **`/opt`**. Install Node **before** this step so moodle-plugin-ci’s post-install **`npm`** step sees the right engine.
+**Prerequisites:** **Node 22** (see **Node.js** above), PHP, curl, and a Java runtime for Mustache validation; permission to run **`apt-get`** and to write **`/opt`**. Install Node **before** this step so moodle-plugin-ci’s post-install **`npm`** step sees the right engine.
 
 **Composer + moodle-plugin-ci:**
 
