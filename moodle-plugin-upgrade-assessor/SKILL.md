@@ -129,7 +129,7 @@ Use this template:
 
 ## Affected notes
 ### <Note ID or short title>
-- Status: <Impacted|Possibly impacted|Not impacted|Unknown>
+- Status: <Impacted|Possibly impacted|Unknown>
 - Source: `<UPGRADING.md path>` (<version section>)
 - Why this matters:
   - <evidence tied to plugin code or architecture>
@@ -141,21 +141,13 @@ Use this template:
 - Verification:
   - [ ] <how to verify fix works>
 
-## Non-affected notes reviewed
-- <Note ID> - short rationale
-
 ## Open questions
 - <unknowns needing user/dev decision>
-
-## Handoff summary for implementation
-- Risk level: <low|medium|high>
-- Estimated effort: <S|M|L>
-- First implementation step: <concrete starting action>
 ```
 
 Report requirements:
 
-- Include at least one rationale line for every note considered.
+- Include only `Impacted`, `Possibly impacted`, and `Unknown` notes in plugin reports, with a rationale for each. Omit `Not impacted` notes from reports, but still assess them for coverage and final counts.
 - For `Impacted` and `Possibly impacted`, include concrete file/symbol touchpoints whenever available.
 - Add explicit TODO checkboxes for implementation and verification.
 - Keep statements evidence-based; avoid definitive claims without code linkage.
